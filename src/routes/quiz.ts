@@ -81,12 +81,11 @@ quizRouter.get('/:slug/questions', async (c) => {
 
     // Generate and insert standard questions if none exist.
     const standardQuestions = getStandardQuestions();
-    for (let i = 0; i < standardQuestions.length; i++) {
-      const question = standardQuestions[i];
-      await c.env.DB.prepare(
-        'INSERT INTO questions (session_id, text, options, order_index) VALUES (?, ?, ?, ?)'
-      ).bind(session.id, question.text, JSON.stringify(question.options), i + 1).run();
-    }
+    const standardQuestionStmts = standardQuestions.map((question, i) => 
+      c.env.DB.prepare('INSERT INTO questions (session_id, text, options, order_index) VALUES (?, ?, ?, ?)')
+        .bind(session.id, question.text, JSON.stringify(question.options), i + 1)
+    );
+    await c.env.DB.batch(standardQuestionStmts);
 
     // Note: The logic for generating AI questions is preserved but may need answers to be submitted first.
     // This part of the code could be moved to a separate endpoint or triggered after a certain number of answers.
@@ -100,12 +99,11 @@ quizRouter.get('/:slug/questions', async (c) => {
     if (answers.results && answers.results.length > 5) {
       const aiQuestions = await generateAIQuestions(c.env.AI, answers.results as any[], session as any);
       
-      for (let i = 0; i < aiQuestions.length; i++) {
-        const question = aiQuestions[i];
-        await c.env.DB.prepare(
-          'INSERT INTO questions (session_id, text, options, order_index) VALUES (?, ?, ?, ?)'
-        ).bind(session.id, question.text, JSON.stringify(question.options), standardQuestions.length + i + 1).run();
-      }
+      const aiQuestionStmts = aiQuestions.map((question, i) => 
+        c.env.DB.prepare('INSERT INTO questions (session_id, text, options, order_index) VALUES (?, ?, ?, ?)')
+          .bind(session.id, question.text, JSON.stringify(question.options), standardQuestions.length + i + 1)
+      );
+      await c.env.DB.batch(aiQuestionStmts);
     }
 
     // Fetch and return all questions for the session.
