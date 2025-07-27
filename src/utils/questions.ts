@@ -1,6 +1,7 @@
 export interface Question {
   text: string;
   options: string[];
+  traits: string[];
 }
 
 export function getStandardQuestions(): Question[] {
@@ -12,7 +13,8 @@ export function getStandardQuestions(): Question[] {
         "Wags tail and brings me a toy",
         "Gives me a calm, happy look",
         "Takes a moment to acknowledge me"
-      ]
+      ],
+      traits: ["love"]
     },
     {
       text: "When meeting new people, your dog usually:",
@@ -21,7 +23,8 @@ export function getStandardQuestions(): Question[] {
         "Observes from a distance first",
         "Hides behind me",
         "Acts like they've known them forever"
-      ]
+      ],
+      traits: ["loyalty"]
     },
     {
       text: "During meal times, your dog:",
@@ -30,7 +33,8 @@ export function getStandardQuestions(): Question[] {
         "Gets very excited and might drool",
         "Does tricks to earn their food",
         "Guards their food area"
-      ]
+      ],
+      traits: ["food_drive"]
     },
     {
       text: "When you're feeling sad, your dog:",
@@ -39,7 +43,8 @@ export function getStandardQuestions(): Question[] {
         "Brings me toys to cheer me up",
         "Gives me space but stays nearby",
         "Doesn't seem to notice much"
-      ]
+      ],
+      traits: ["love"]
     },
     {
       text: "Your dog's favorite type of play is:",
@@ -48,7 +53,8 @@ export function getStandardQuestions(): Question[] {
         "Tug-of-war",
         "Puzzle toys and brain games",
         "Wrestling with other dogs"
-      ]
+      ],
+      traits: ["playfulness"]
     },
     {
       text: "When left alone, your dog typically:",
@@ -57,7 +63,8 @@ export function getStandardQuestions(): Question[] {
         "Looks out the window",
         "Gets into mischief",
         "Waits by the door for my return"
-      ]
+      ],
+      traits: ["loyalty", "independence", "mischief"]
     },
     {
       text: "During training sessions, your dog:",
@@ -66,7 +73,8 @@ export function getStandardQuestions(): Question[] {
         "Needs lots of treats to stay motivated",
         "Gets distracted easily",
         "Shows off once they know a trick"
-      ]
+      ],
+      traits: ["playfulness", "intelligence", "food_drive"]
     },
     {
       text: "When exploring new places, your dog:",
@@ -75,7 +83,8 @@ export function getStandardQuestions(): Question[] {
         "Stays close to me",
         "Sniffs everything thoroughly",
         "Looks for other dogs to play with"
-      ]
+      ],
+      traits: ["independence"]
     },
     {
       text: "Your dog's reaction to bath time is:",
@@ -84,7 +93,8 @@ export function getStandardQuestions(): Question[] {
         "Tolerates it for treats",
         "Actually seems to enjoy it",
         "Gives me the saddest puppy eyes"
-      ]
+      ],
+      traits: ["mischief"]
     },
     {
       text: "When other dogs approach, your dog:",
@@ -93,7 +103,8 @@ export function getStandardQuestions(): Question[] {
         "Assesses the situation first",
         "Gets protective of me",
         "Ignores them completely"
-      ]
+      ],
+      traits: ["loyalty"]
     }
   ];
 }
@@ -124,14 +135,18 @@ Make the question engaging and specific to understanding the dog's ${trait}.`;
       
       const questionData = JSON.parse(response.response);
       if (questionData.text && questionData.options && Array.isArray(questionData.options)) {
-        questions.push(questionData);
+        questions.push({
+          ...questionData,
+          traits: [trait]
+        });
       }
     } catch (error) {
       console.error(`Error generating AI question for ${trait}:`, error);
       // Fallback question
       questions.push({
         text: `How would you describe your dog's ${trait}?`,
-        options: ['Very high', 'High', 'Moderate', 'Low']
+        options: ['Very high', 'High', 'Moderate', 'Low'],
+        traits: [trait]
       });
     }
   }
