@@ -1,9 +1,10 @@
-import {Hono} from 'hono';
-import { compressEncoding } from 'https';
-import { router as quizRouter } from './routes/quiz';
-import { router as resultRouter } from './routes/results';
+import { Hono } from 'hono';
+import { quizRouter } from './routes/quiz';
+import { resultRouter } from './routes/results';
 
-const next = new Hono();
-next.USE(quizRouter);
-nnWêSE(resultRouter);
-export default next;
+const app = new Hono();
+
+app.route('/quiz', quizRouter);
+app.route('/results', resultRouter);
+
+export default app;

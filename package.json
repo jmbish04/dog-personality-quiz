@@ -1,0 +1,24 @@
+{
+  "name": "dog-personality-quiz",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A personalized dog personality quiz with Cloudflare Workers",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "tsc",
+    "deploy": "wrangler deploy",
+    "test": "echo \"No tests specified yet\""
+  },
+  "dependencies": {
+    "hono": "^4.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.0.0",
+    "typescript": "^5.0.0",
+    "wrangler": "^3.0.0"
+  },
+  "keywords": ["cloudflare", "workers", "hono", "quiz", "ai"],
+  "author": "jmbish04",
+  "license": "MIT"
+}
