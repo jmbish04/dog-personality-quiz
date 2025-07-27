@@ -9,12 +9,10 @@ name = "dog-personality-quiz"
 binding = "DB"
 database_name = "dog-quiz-db"
 database_id = "local"
-preview_database_id = "local"
 
 [[r2_buckets]]
 binding = "BUCKET"
 bucket_name = "dog-quiz-images"
-preview_bucket_name = "dog-quiz-images-preview"
 
 [ai]
 binding = "AI"
