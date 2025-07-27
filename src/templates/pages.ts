@@ -232,20 +232,31 @@ export function getQuizPage(slug: string, session: any): string {
             const question = questions[currentQuestionIndex];
             updateProgress();
             
-            document.getElementById('questionContainer').innerHTML = \`
-                <h3 class="text-xl font-bold mb-6 text-purple-800">
-                    Question \${currentQuestionIndex + 1} of \${questions.length}
-                </h3>
-                <p class="text-lg mb-6 text-gray-700">\${question.text}</p>
-                <div class="space-y-3">
-                    \${question.options.map((option, index) => \`
-                        <button onclick="selectAnswer('\${question.id}', '\${option}')" 
-                                class="w-full text-left p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors duration-200">
-                            \${option}
-                        </button>
-                    \`).join('')}
-                </div>
-            \`;
+            const container = document.getElementById('questionContainer');
+            container.innerHTML = ''; // Clear previous content
+
+            const h3 = document.createElement('h3');
+            h3.className = 'text-xl font-bold mb-6 text-purple-800';
+            h3.textContent = \`Question \${currentQuestionIndex + 1} of \${questions.length}\`;
+            container.appendChild(h3);
+
+            const p = document.createElement('p');
+            p.className = 'text-lg mb-6 text-gray-700';
+            p.textContent = question.text;
+            container.appendChild(p);
+
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'space-y-3';
+
+            question.options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'w-full text-left p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors duration-200';
+                button.textContent = option;
+                button.onclick = () => selectAnswer(question.id, option);
+                optionsDiv.appendChild(button);
+            });
+
+            container.appendChild(optionsDiv);
         }
 
         async function selectAnswer(questionId, selectedOption) {
