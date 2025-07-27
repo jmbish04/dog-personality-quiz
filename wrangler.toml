@@ -19,3 +19,10 @@ binding = "AI"
 
 [vars]
 ENVIRONMENT = "development"
+
+# wrangler.toml (wrangler v3.88.0^)
+[observability.logs]
+enabled = true
+
+
+
