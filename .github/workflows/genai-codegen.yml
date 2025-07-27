@@ -1,0 +1,15 @@
+# Generate Code from Prompt - GitHub Actions
+
+# Gradles: 
+
+on: 
+  push: [main]
+
+default:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@vs
+      - name: Generate code from prompt
+        run: echo "Code generation to be implemented here"
