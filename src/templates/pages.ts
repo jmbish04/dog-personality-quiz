@@ -95,7 +95,7 @@ export function getResultsPage(slug: string, sessionData: any): string {
     .replace(/{{DOG_NAME_HTML}}/g, escapeHtml(sessionData.dog_name))
     .replace(/{{DOG_NAME_JS}}/g, JSON.stringify(sessionData.dog_name))
     .replace(/{{SUMMARY}}/g, escapeHtml(sessionData.summary))
-    .replace(/{{SLUG}}/g, escapeHtml(slug))
+    .replace(/{{SLUG}}/g, sessionData.slug.replace(/\\/g, '\\\\').replace(/'/g, "\\'"))
     .replace(/{{TRAIT_SECTIONS}}/g, traitSections)
     .replace(/{{GENERATED_IMAGES_JSON}}/g, JSON.stringify(generatedImages));
 }
