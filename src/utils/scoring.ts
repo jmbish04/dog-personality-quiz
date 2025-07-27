@@ -9,7 +9,7 @@ export interface TraitScores {
   [trait: string]: TraitScore;
 }
 
-export function calculateTraitScores(qaPairs: { question: string; answer: string }[]): TraitScores {
+export function calculateTraitScores(qaPairs: { question: string; answer: string; traits?: string[] }[]): TraitScores {
   // Initialize trait scores
   const scores: TraitScores = {
     love: { label: '', emoji: '💖', description: '', score: 0 },
@@ -23,67 +23,65 @@ export function calculateTraitScores(qaPairs: { question: string; answer: string
 
   // Calculate base scores from answers
   for (const qa of qaPairs) {
-    const question = qa.question.toLowerCase();
     const answer = qa.answer.toLowerCase();
+    const questionTraits = qa.traits || [];
 
-    // Love scoring
-    if (question.includes('greet') || question.includes('feeling sad')) {
-      if (answer.includes('cuddles') || answer.includes('jumps all over') || answer.includes('comfort')) {
-        scores.love.score += 20;
-      } else if (answer.includes('happy') || answer.includes('wags')) {
-        scores.love.score += 15;
-      } else if (answer.includes('calm')) {
-        scores.love.score += 10;
-      }
-    }
+    // Process each trait that this question measures
+    for (const trait of questionTraits) {
+      switch (trait) {
+        case 'love':
+          if (answer.includes('cuddles') || answer.includes('jumps all over') || answer.includes('comfort')) {
+            scores.love.score += 20;
+          } else if (answer.includes('happy') || answer.includes('wags')) {
+            scores.love.score += 15;
+          } else if (answer.includes('calm')) {
+            scores.love.score += 10;
+          }
+          break;
 
-    // Loyalty scoring
-    if (question.includes('left alone') || question.includes('new people') || question.includes('approach')) {
-      if (answer.includes('waits by the door') || answer.includes('stays close') || answer.includes('protective')) {
-        scores.loyalty.score += 20;
-      } else if (answer.includes('nearby') || answer.includes('observes')) {
-        scores.loyalty.score += 15;
-      }
-    }
+        case 'loyalty':
+          if (answer.includes('waits by the door') || answer.includes('stays close') || answer.includes('protective')) {
+            scores.loyalty.score += 20;
+          } else if (answer.includes('nearby') || answer.includes('observes')) {
+            scores.loyalty.score += 15;
+          }
+          break;
 
-    // Playfulness scoring
-    if (question.includes('play') || question.includes('training')) {
-      if (answer.includes('fetch') || answer.includes('play immediately') || answer.includes('excited')) {
-        scores.playfulness.score += 20;
-      } else if (answer.includes('tug') || answer.includes('toys')) {
-        scores.playfulness.score += 15;
-      }
-    }
+        case 'playfulness':
+          if (answer.includes('fetch') || answer.includes('play immediately') || answer.includes('excited')) {
+            scores.playfulness.score += 20;
+          } else if (answer.includes('tug') || answer.includes('toys')) {
+            scores.playfulness.score += 15;
+          }
+          break;
 
-    // Intelligence scoring
-    if (question.includes('training') || question.includes('puzzle')) {
-      if (answer.includes('learns quickly') || answer.includes('puzzle') || answer.includes('brain games')) {
-        scores.intelligence.score += 20;
-      } else if (answer.includes('tricks') || answer.includes('shows off')) {
-        scores.intelligence.score += 15;
-      }
-    }
+        case 'intelligence':
+          if (answer.includes('learns quickly') || answer.includes('puzzle') || answer.includes('brain games')) {
+            scores.intelligence.score += 20;
+          } else if (answer.includes('tricks') || answer.includes('shows off')) {
+            scores.intelligence.score += 15;
+          }
+          break;
 
-    // Independence scoring
-    if (question.includes('exploring') || question.includes('left alone')) {
-      if (answer.includes('confidently leads') || answer.includes('sleeps peacefully') || answer.includes('ignores')) {
-        scores.independence.score += 20;
-      } else if (answer.includes('sniffs everything') || answer.includes('looks out window')) {
-        scores.independence.score += 15;
-      }
-    }
+        case 'independence':
+          if (answer.includes('confidently leads') || answer.includes('sleeps peacefully') || answer.includes('ignores')) {
+            scores.independence.score += 20;
+          } else if (answer.includes('sniffs everything') || answer.includes('looks out window')) {
+            scores.independence.score += 15;
+          }
+          break;
 
-    // Mischief scoring
-    if (question.includes('left alone') || question.includes('bath')) {
-      if (answer.includes('mischief') || answer.includes('escape') || answer.includes('distracted')) {
-        scores.mischief.score += 20;
-      }
-    }
+        case 'mischief':
+          if (answer.includes('mischief') || answer.includes('escape') || answer.includes('distracted')) {
+            scores.mischief.score += 20;
+          }
+          break;
 
-    // Food drive scoring
-    if (question.includes('meal') || question.includes('training')) {
-      if (answer.includes('excited') || answer.includes('drool') || answer.includes('guards food') || answer.includes('treats')) {
-        scores.food_drive.score += 20;
+        case 'food_drive':
+          if (answer.includes('excited') || answer.includes('drool') || answer.includes('guards food') || answer.includes('treats')) {
+            scores.food_drive.score += 20;
+          }
+          break;
       }
     }
   }

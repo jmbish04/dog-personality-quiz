@@ -3,10 +3,20 @@ import { Env } from '../index';
 import { calculateTraitScores } from '../utils/scoring';
 import { generateTraitImages } from '../utils/images';
 import { generatePersonalityTitle } from '../utils/personality';
+import { getStandardQuestions } from '../utils/questions';
 
 // This router handles all result-related endpoints.
 // It's initialized with Hono and bindings for the Cloudflare environment (Env).
 const resultsRouter = new Hono<{ Bindings: Env }>();
+
+/**
+ * Helper function to get traits for a question by matching its text
+ */
+function getTraitsForQuestion(questionText: string): string[] {
+  const standardQuestions = getStandardQuestions();
+  const matchingQuestion = standardQuestions.find(q => q.text === questionText);
+  return matchingQuestion?.traits || [];
+}
 
 /**
  * @route POST /:slug/generate
@@ -60,7 +70,8 @@ resultsRouter.post('/:slug/generate', async (c) => {
     // Parse Q&A pairs from structured data
     const qaPairs = qaData.results.map((row: any) => ({
       question: row.question,
-      answer: row.answer
+      answer: row.answer,
+      traits: getTraitsForQuestion(row.question)
     }));
 
     // Calculate personality trait scores based on answers.
@@ -140,7 +151,8 @@ resultsRouter.get('/:slug', async (c) => {
     // Parse Q&A pairs from structured data
     const qaPairs = qaData.results.map((row: any) => ({
       question: row.question,
-      answer: row.answer
+      answer: row.answer,
+      traits: getTraitsForQuestion(row.question)
     }));
 
     return c.json({
