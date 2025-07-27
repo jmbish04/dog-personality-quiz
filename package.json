@@ -1,0 +1,27 @@
+{
+  "name": "dog-personality-quiz",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest",
+    "build": "tsc"
+  },
+  "keywords": ["cloudflare", "workers", "quiz", "ai"],
+  "author": "",
+  "license": "ISC",
+  "description": "A Cloudflare Worker app for dog personality quiz with AI-generated images",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240605.0",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0",
+    "wrangler": "^3.60.3"
+  },
+  "dependencies": {
+    "hono": "^4.4.8"
+  }
+}
