@@ -91,7 +91,7 @@ export function calculateTraitScores(qaPairs: { question: string; answer: string
   // Normalize scores and generate labels
   for (const [trait, data] of Object.entries(scores)) {
     // Ensure minimum score and cap at 100
-    data.score = Math.max(20, Math.min(100, data.score + Math.random() * 20));
+    data.score = Math.max(20, Math.min(100, data.score));
     
     // Generate labels based on score ranges
     if (data.score >= 80) {
