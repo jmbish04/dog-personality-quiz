@@ -4,14 +4,21 @@ import { calculateTraitScores } from '../utils/scoring';
 import { generateTraitImages } from '../utils/images';
 import { generatePersonalityTitle } from '../utils/personality';
 
+// This router handles all result-related endpoints.
+// It's initialized with Hono and bindings for the Cloudflare environment (Env).
 const resultsRouter = new Hono<{ Bindings: Env }>();
 
-// Generate and get quiz results
+/**
+ * @route POST /:slug/generate
+ * @description Generates the quiz results for a given session.
+ * It calculates trait scores, generates a personality title and images using AI,
+ * and saves the results to the database. If results already exist, it returns them.
+ */
 resultsRouter.post('/:slug/generate', async (c) => {
   try {
     const slug = c.req.param('slug');
     
-    // Get session data
+    // Fetch session data
     const session = await c.env.DB.prepare(`
       SELECT s.*
       FROM sessions s
@@ -22,16 +29,7 @@ resultsRouter.post('/:slug/generate', async (c) => {
       return c.json({ error: 'Quiz session not found' }, 404);
     }
 
-    // Get questions and answers for this session
-    const qaData = await c.env.DB.prepare(`
-      SELECT q.text as question, a.selected_option as answer
-      FROM questions q
-      JOIN answers a ON q.id = a.question_id
-      WHERE q.session_id = ?
-      ORDER BY q.order_index
-    `).bind(session.id).all();
-
-    // Check if results already exist
+    // Check if results have already been generated to prevent re-computation.
     const existingResults = await c.env.DB.prepare(
       'SELECT * FROM results WHERE session_id = ?'
     ).bind(session.id).first();
@@ -50,22 +48,31 @@ resultsRouter.post('/:slug/generate', async (c) => {
       });
     }
 
+    // Get questions and answers for this session
+    const qaData = await c.env.DB.prepare(`
+      SELECT q.text as question, a.selected_option as answer
+      FROM questions q
+      JOIN answers a ON q.id = a.question_id
+      WHERE q.session_id = ?
+      ORDER BY q.order_index
+    `).bind(session.id).all();
+
     // Parse Q&A pairs from structured data
     const qaPairs = qaData.results.map((row: any) => ({
       question: row.question,
       answer: row.answer
     }));
 
-    // Calculate trait scores
+    // Calculate personality trait scores based on answers.
     const scores = calculateTraitScores(qaPairs);
     
-    // Generate personality title
+    // Generate a catchy personality title using Cloudflare AI.
     const title = await generatePersonalityTitle(c.env.AI, session as any, scores);
     
-    // Generate trait images
+    // Generate unique images for each personality trait using AI and store them in R2.
     const generatedImages = await generateTraitImages(c.env.AI, c.env.BUCKET, session as any, scores);
     
-    // Save results
+    // Save the newly generated results to the database.
     const result = await c.env.DB.prepare(
       'INSERT INTO results (session_id, title, summary, scores, generated_images) VALUES (?, ?, ?, ?, ?)'
     ).bind(
@@ -77,7 +84,7 @@ resultsRouter.post('/:slug/generate', async (c) => {
     ).run();
 
     if (!result.success) {
-      throw new Error('Failed to save results');
+      throw new Error('Failed to save results to the database');
     }
 
     return c.json({
@@ -97,12 +104,15 @@ resultsRouter.post('/:slug/generate', async (c) => {
   }
 });
 
-// Get quiz results
+/**
+ * @route GET /:slug
+ * @description Retrieves the generated results for a specific quiz session.
+ */
 resultsRouter.get('/:slug', async (c) => {
   try {
     const slug = c.req.param('slug');
     
-    // Get session and results
+    // Fetch session and result data in a single query.
     const sessionData = await c.env.DB.prepare(`
       SELECT s.*, r.*
       FROM sessions s
@@ -158,13 +168,15 @@ resultsRouter.get('/:slug', async (c) => {
   }
 });
 
-// Regenerate trait image
+/**
+ * @route POST /:slug/regenerate-image/:trait
+ * @description Regenerates an AI image for a specific personality trait.
+ */
 resultsRouter.post('/:slug/regenerate-image/:trait', async (c) => {
   try {
     const slug = c.req.param('slug');
     const trait = c.req.param('trait');
     
-    // Get session and results
     const sessionData = await c.env.DB.prepare(`
       SELECT s.*, r.scores
       FROM sessions s
@@ -179,13 +191,13 @@ resultsRouter.post('/:slug/regenerate-image/:trait', async (c) => {
     const scores = JSON.parse(sessionData.scores as string);
     
     if (!scores[trait]) {
-      return c.json({ error: 'Invalid trait' }, 400);
+      return c.json({ error: 'Invalid trait specified' }, 400);
     }
 
-    // Generate new image for this trait
+    // Generate a new image only for the specified trait.
     const newImages = await generateTraitImages(c.env.AI, c.env.BUCKET, sessionData as any, { [trait]: scores[trait] });
     
-    // Update results with new image
+    // Update the results JSON with the new image URL.
     const currentResults = await c.env.DB.prepare(
       'SELECT generated_images FROM results WHERE session_id = ?'
     ).bind(sessionData.id).first();
@@ -200,7 +212,7 @@ resultsRouter.post('/:slug/regenerate-image/:trait', async (c) => {
     return c.json({
       success: true,
       new_image: newImages[trait],
-      message: `New ${trait} image generated`
+      message: `New image for ${trait} has been generated.`
     });
   } catch (error) {
     console.error('Error regenerating image:', error);
@@ -208,17 +220,19 @@ resultsRouter.post('/:slug/regenerate-image/:trait', async (c) => {
   }
 });
 
-// Chat about results
+/**
+ * @route POST /:slug/chat
+ * @description Provides an AI-powered chat to discuss the dog's personality results.
+ */
 resultsRouter.post('/:slug/chat', async (c) => {
   try {
     const slug = c.req.param('slug');
     const { message } = await c.req.json();
     
     if (!message) {
-      return c.json({ error: 'Message is required' }, 400);
+      return c.json({ error: 'A chat message is required' }, 400);
     }
 
-    // Get session and results
     const sessionData = await c.env.DB.prepare(`
       SELECT s.*, r.scores, r.title
       FROM sessions s
@@ -232,7 +246,7 @@ resultsRouter.post('/:slug/chat', async (c) => {
 
     const scores = JSON.parse(sessionData.scores as string);
     
-    // Generate AI response about the dog's personality
+    // Construct a detailed prompt for the AI model.
     const chatPrompt = `You are a dog personality expert. Based on the personality analysis for ${sessionData.dog_name} (${sessionData.breed || 'mixed breed'}), answer this question: "${message}"
 
 Dog's personality profile:
@@ -242,13 +256,14 @@ Dog's personality profile:
 
 Respond in a friendly, expert tone as if you're a professional dog behaviorist. Keep it engaging and insightful.`;
 
+    // Run the chat completion with the Llama 3.1 model.
     const response = await c.env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
       messages: [{ role: 'user', content: chatPrompt }]
     });
 
     return c.json({
       success: true,
-      response: response.response || 'I\'d be happy to tell you more about your dog\'s personality! Could you ask me something specific?'
+      response: response.response || 'I would be happy to tell you more about your dog\'s personality! Could you ask me something specific?'
     });
   } catch (error) {
     console.error('Error in chat:', error);

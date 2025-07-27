@@ -3,9 +3,16 @@ import { Env } from '../index';
 import { generateSlug } from '../utils/slug';
 import { getStandardQuestions, generateAIQuestions } from '../utils/questions';
 
+// This router is initialized with Hono and bindings for the Cloudflare environment (Env),
+// allowing access to services like D1, R2, and AI.
 const quizRouter = new Hono<{ Bindings: Env }>();
 
-// Start a new quiz session
+/**
+ * @route POST /start
+ * @description Starts a new quiz session.
+ * Expects a JSON body with dog_name, breed, age, and gender.
+ * Creates a new session in the database and returns a unique session slug.
+ */
 quizRouter.post('/start', async (c) => {
   try {
     const { dog_name, breed, age, gender } = await c.req.json();
@@ -16,32 +23,37 @@ quizRouter.post('/start', async (c) => {
 
     const slug = generateSlug();
     
-    // Insert new session
+    // Insert the new session into the D1 database.
     const result = await c.env.DB.prepare(
       'INSERT INTO sessions (slug, dog_name, breed, age, gender) VALUES (?, ?, ?, ?, ?)'
     ).bind(slug, dog_name, breed || null, age || null, gender || null).run();
 
     if (!result.success) {
-      throw new Error('Failed to create session');
+      throw new Error('Failed to create session in database');
     }
 
     return c.json({
       success: true,
       session_id: slug,
-      message: 'Quiz session started'
+      message: 'Quiz session started successfully'
     });
   } catch (error) {
-    console.error('Error starting quiz:', error);
+    console.error('Error starting quiz session:', error);
     return c.json({ error: 'Failed to start quiz session' }, 500);
   }
 });
 
-// Get quiz questions
+/**
+ * @route GET /:slug/questions
+ * @description Retrieves questions for a given quiz session.
+ * If questions don't exist, it generates and saves standard questions.
+ * It can also generate additional questions using Cloudflare AI based on previous answers.
+ */
 quizRouter.get('/:slug/questions', async (c) => {
   try {
     const slug = c.req.param('slug');
     
-    // Get session
+    // Fetch the session from the database.
     const session = await c.env.DB.prepare(
       'SELECT * FROM sessions WHERE slug = ?'
     ).bind(slug).first();
@@ -50,7 +62,7 @@ quizRouter.get('/:slug/questions', async (c) => {
       return c.json({ error: 'Quiz session not found' }, 404);
     }
 
-    // Check if questions already exist
+    // Check if questions have already been generated for this session.
     const existingQuestions = await c.env.DB.prepare(
       'SELECT * FROM questions WHERE session_id = ? ORDER BY order_index'
     ).bind(session.id).all();
@@ -67,10 +79,8 @@ quizRouter.get('/:slug/questions', async (c) => {
       });
     }
 
-    // Generate standard questions
+    // Generate and insert standard questions if none exist.
     const standardQuestions = getStandardQuestions();
-    
-    // Insert standard questions
     for (let i = 0; i < standardQuestions.length; i++) {
       const question = standardQuestions[i];
       await c.env.DB.prepare(
@@ -78,7 +88,8 @@ quizRouter.get('/:slug/questions', async (c) => {
       ).bind(session.id, question.text, JSON.stringify(question.options), i + 1).run();
     }
 
-    // Get previous answers for AI question generation
+    // Note: The logic for generating AI questions is preserved but may need answers to be submitted first.
+    // This part of the code could be moved to a separate endpoint or triggered after a certain number of answers.
     const answers = await c.env.DB.prepare(`
       SELECT q.text, a.selected_option 
       FROM answers a 
@@ -86,11 +97,9 @@ quizRouter.get('/:slug/questions', async (c) => {
       WHERE q.session_id = ?
     `).bind(session.id).all();
 
-    // Generate AI questions if we have some answers
     if (answers.results && answers.results.length > 5) {
       const aiQuestions = await generateAIQuestions(c.env.AI, answers.results as any[], session as any);
       
-      // Insert AI-generated questions
       for (let i = 0; i < aiQuestions.length; i++) {
         const question = aiQuestions[i];
         await c.env.DB.prepare(
@@ -99,7 +108,7 @@ quizRouter.get('/:slug/questions', async (c) => {
       }
     }
 
-    // Get all questions
+    // Fetch and return all questions for the session.
     const allQuestions = await c.env.DB.prepare(
       'SELECT * FROM questions WHERE session_id = ? ORDER BY order_index'
     ).bind(session.id).all();
@@ -119,7 +128,11 @@ quizRouter.get('/:slug/questions', async (c) => {
   }
 });
 
-// Submit an answer
+/**
+ * @route POST /:slug/answer
+ * @description Submits an answer for a specific question in a session.
+ * It updates an existing answer or creates a new one (upsert logic).
+ */
 quizRouter.post('/:slug/answer', async (c) => {
   try {
     const slug = c.req.param('slug');
@@ -129,7 +142,7 @@ quizRouter.post('/:slug/answer', async (c) => {
       return c.json({ error: 'Question ID and selected option are required' }, 400);
     }
 
-    // Verify question belongs to this session
+    // Verify the question belongs to the specified session to ensure data integrity.
     const question = await c.env.DB.prepare(`
       SELECT q.*, s.id as session_id 
       FROM questions q 
@@ -141,31 +154,36 @@ quizRouter.post('/:slug/answer', async (c) => {
       return c.json({ error: 'Question not found for this session' }, 404);
     }
 
-    // Check if answer already exists
+    // Check if an answer for this question already exists.
     const existingAnswer = await c.env.DB.prepare(
       'SELECT * FROM answers WHERE question_id = ?'
     ).bind(question_id).first();
 
     if (existingAnswer) {
-      // Update existing answer
+      // Update the existing answer.
       await c.env.DB.prepare(
         'UPDATE answers SET selected_option = ? WHERE question_id = ?'
       ).bind(selected_option, question_id).run();
     } else {
-      // Insert new answer
+      // Insert a new answer.
       await c.env.DB.prepare(
         'INSERT INTO answers (question_id, selected_option) VALUES (?, ?)'
       ).bind(question_id, selected_option).run();
     }
 
-    return c.json({ success: true, message: 'Answer saved' });
+    return c.json({ success: true, message: 'Answer saved successfully' });
   } catch (error) {
     console.error('Error saving answer:', error);
     return c.json({ error: 'Failed to save answer' }, 500);
   }
 });
 
-// Upload photo
+/**
+ * @route POST /:slug/photo
+ * @description Uploads a photo for the quiz session.
+ * The photo is sent as form-data and stored in an R2 bucket.
+ * The photo's key is then saved in the session's database record.
+ */
 quizRouter.post('/:slug/photo', async (c) => {
   try {
     const slug = c.req.param('slug');
@@ -173,16 +191,11 @@ quizRouter.post('/:slug/photo', async (c) => {
     const photo = formData.get('photo');
     
     if (!photo || typeof photo === 'string') {
-      return c.json({ error: 'Photo is required' }, 400);
+      return c.json({ error: 'A valid photo file is required' }, 400);
     }
 
     const photoFile = photo as File;
 
-    if (!photo) {
-      return c.json({ error: 'Photo is required' }, 400);
-    }
-
-    // Get session
     const session = await c.env.DB.prepare(
       'SELECT * FROM sessions WHERE slug = ?'
     ).bind(slug).first();
@@ -191,17 +204,17 @@ quizRouter.post('/:slug/photo', async (c) => {
       return c.json({ error: 'Quiz session not found' }, 404);
     }
 
-    // Generate unique key for R2
+    // Generate a unique key for the photo in R2 storage.
     const photoKey = `photos/${slug}-${Date.now()}.jpg`;
     
-    // Upload to R2
+    // Upload the photo stream to the R2 bucket.
     await c.env.BUCKET.put(photoKey, photoFile.stream(), {
       httpMetadata: {
         contentType: photoFile.type
       }
     });
 
-    // Update session with photo URL
+    // Update the session record with the R2 photo key.
     await c.env.DB.prepare(
       'UPDATE sessions SET photo_url = ? WHERE slug = ?'
     ).bind(photoKey, slug).run();
