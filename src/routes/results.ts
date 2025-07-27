@@ -18,15 +18,11 @@ resultsRouter.post('/:slug/generate', async (c) => {
   try {
     const slug = c.req.param('slug');
     
-    // Fetch session data and all associated question-answer pairs.
+    // Fetch session data
     const session = await c.env.DB.prepare(`
-      SELECT s.*, 
-        GROUP_CONCAT(q.text || ':::' || a.selected_option, '|||') as qa_pairs
+      SELECT s.*
       FROM sessions s
-      LEFT JOIN questions q ON s.id = q.session_id
-      LEFT JOIN answers a ON q.id = a.question_id
       WHERE s.slug = ?
-      GROUP BY s.id
     `).bind(slug).first();
 
     if (!session) {
@@ -52,12 +48,20 @@ resultsRouter.post('/:slug/generate', async (c) => {
       });
     }
 
-    // Parse the concatenated Q&A pairs from the database query.
-    const qaPairs = (session as any).qa_pairs ? 
-      (session as any).qa_pairs.split('|||').map((pair: string) => {
-        const [question, answer] = pair.split(':::');
-        return { question, answer };
-      }).filter((pair: any) => pair.question && pair.answer) : [];
+    // Get questions and answers for this session
+    const qaData = await c.env.DB.prepare(`
+      SELECT q.text as question, a.selected_option as answer
+      FROM questions q
+      JOIN answers a ON q.id = a.question_id
+      WHERE q.session_id = ?
+      ORDER BY q.order_index
+    `).bind(session.id).all();
+
+    // Parse Q&A pairs from structured data
+    const qaPairs = qaData.results.map((row: any) => ({
+      question: row.question,
+      answer: row.answer
+    }));
 
     // Calculate personality trait scores based on answers.
     const scores = calculateTraitScores(qaPairs);
@@ -110,14 +114,10 @@ resultsRouter.get('/:slug', async (c) => {
     
     // Fetch session and result data in a single query.
     const sessionData = await c.env.DB.prepare(`
-      SELECT s.*, r.*,
-        GROUP_CONCAT(q.text || ':::' || a.selected_option, '|||') as qa_pairs
+      SELECT s.*, r.*
       FROM sessions s
       LEFT JOIN results r ON s.id = r.session_id
-      LEFT JOIN questions q ON s.id = q.session_id
-      LEFT JOIN answers a ON q.id = a.question_id
       WHERE s.slug = ?
-      GROUP BY s.id, r.id
     `).bind(slug).first();
 
     if (!sessionData) {
@@ -128,11 +128,20 @@ resultsRouter.get('/:slug', async (c) => {
       return c.json({ error: 'Results not generated yet. Please complete the quiz first.' }, 404);
     }
 
-    const qaPairs = (sessionData as any).qa_pairs ? 
-      (sessionData as any).qa_pairs.split('|||').map((pair: string) => {
-        const [question, answer] = pair.split(':::');
-        return { question, answer };
-      }).filter((pair: any) => pair.question && pair.answer) : [];
+    // Get questions and answers for this session
+    const qaData = await c.env.DB.prepare(`
+      SELECT q.text as question, a.selected_option as answer
+      FROM questions q
+      JOIN answers a ON q.id = a.question_id
+      WHERE q.session_id = ?
+      ORDER BY q.order_index
+    `).bind(sessionData.id).all();
+
+    // Parse Q&A pairs from structured data
+    const qaPairs = qaData.results.map((row: any) => ({
+      question: row.question,
+      answer: row.answer
+    }));
 
     return c.json({
       success: true,
