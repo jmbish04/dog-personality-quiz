@@ -1,8 +1,36 @@
+# Dependencies
 node_modules/
 dist/
-*.log
+
+# Build artifacts
+*.tsbuildinfo
+
+# Environment variables
 .env
 .env.local
+.env.production
+.env.staging
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
 .DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Wrangler
+# This is likely for your Cloudflare Worker tooling.
+.wrangler/
+
+# Temporary files
 *.tmp
 *.temp

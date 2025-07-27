@@ -1,0 +1,21 @@
+name = "dog-personality-quiz"
+main = "src/index.ts"
+compatibility_date = "2024-06-01"
+
+[env.production]
+name = "dog-personality-quiz"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "dog-quiz-db"
+database_id = "local"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "dog-quiz-images"
+
+[ai]
+binding = "AI"
+
+[vars]
+ENVIRONMENT = "development"
