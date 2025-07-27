@@ -74,4 +74,33 @@ describe('HTML Template Pages', () => {
     expect(html).not.toContain('<script>alert("xss")</script>');
     expect(html).toContain('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
   });
+
+  test('should prevent JavaScript XSS vulnerability in results page', () => {
+    const mockSessionData = {
+      title: 'Test Results',
+      dog_name: "Pat's Dog'; alert('XSS'); var dummy='",
+      summary: 'Test summary',
+      scores: JSON.stringify({
+        love: {
+          emoji: '💖',
+          label: 'High',
+          description: 'Loving dog',
+          score: 80
+        }
+      }),
+      generated_images: JSON.stringify({})
+    };
+    
+    const html = getResultsPage('test-xss', mockSessionData);
+    
+    // The XSS should now be prevented by JSON.stringify in JavaScript contexts
+    // Dangerous unescaped content should not be present in JavaScript
+    expect(html).not.toContain("Pat's Dog'; alert('XSS'); var dummy=''s personality");
+    
+    // JSON.stringify should properly escape the dangerous content in JavaScript
+    expect(html).toContain('"Pat\'s Dog\'; alert(\'XSS\'); var dummy=\'"');
+    
+    // Check that HTML contexts still properly escape (quotes become &#039;)
+    expect(html).toContain('Chat about Pat&#039;s Dog&#039;; alert(&#039;XSS&#039;); var dummy=&#039;');
+  });
 });

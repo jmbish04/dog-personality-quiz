@@ -149,14 +149,14 @@ export const QUIZ_TEMPLATE = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz - {{DOG_NAME}} | Dog Personality Quiz</title>
+    <title>Quiz - {{DOG_NAME_HTML}} | Dog Personality Quiz</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gradient-to-br from-blue-100 to-purple-100 min-h-screen">
     <div class="container mx-auto px-4 py-8">
         <header class="text-center mb-8">
             <h1 class="text-4xl font-bold text-purple-800 mb-2">
-                🐶 {{DOG_NAME}}'s Personality Quiz
+                🐶 {{DOG_NAME_HTML}}'s Personality Quiz
             </h1>
             <div class="bg-white rounded-full px-6 py-2 inline-block shadow-lg">
                 <span id="progress" class="text-purple-600 font-semibold">Loading...</span>
@@ -165,7 +165,7 @@ export const QUIZ_TEMPLATE = `<!DOCTYPE html>
 
         <div id="photoUpload" class="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-8 mb-8" style="display: {{PHOTO_DISPLAY}}">
             <h2 class="text-xl font-bold text-center mb-4 text-purple-800">
-                📸 Upload {{DOG_NAME}}'s Photo (Optional)
+                📸 Upload {{DOG_NAME_HTML}}'s Photo (Optional)
             </h2>
             <p class="text-gray-600 text-center mb-6">
                 Add a photo to create personalized AI images for each trait!
@@ -353,7 +353,7 @@ export const RESULTS_TEMPLATE = `<!DOCTYPE html>
     <title>{{TITLE}} | Dog Personality Quiz</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <meta property="og:title" content="{{TITLE}}">
-    <meta property="og:description" content="Check out {{DOG_NAME}}'s personality quiz results!">
+    <meta property="og:description" content="Check out {{DOG_NAME_HTML}}'s personality quiz results!">
     <meta property="og:type" content="website">
 </head>
 <body class="bg-gradient-to-br from-blue-100 to-purple-100 min-h-screen">
@@ -383,7 +383,7 @@ export const RESULTS_TEMPLATE = `<!DOCTYPE html>
         <!-- Chat Modal -->
         <div id="chatModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
             <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
-                <h3 class="text-xl font-bold mb-4 text-purple-800">Chat about {{DOG_NAME}}</h3>
+                <h3 class="text-xl font-bold mb-4 text-purple-800">Chat about {{DOG_NAME_HTML}}</h3>
                 <div id="chatMessages" class="mb-4 max-h-64 overflow-y-auto"></div>
                 <div class="flex space-x-2">
                     <input type="text" id="chatInput" placeholder="Ask about your dog's personality..." 
@@ -404,7 +404,7 @@ export const RESULTS_TEMPLATE = `<!DOCTYPE html>
             if (navigator.share) {
                 navigator.share({
                     title: '{{TITLE}}',
-                    text: 'Check out {{DOG_NAME}}\\\'s personality quiz results!',
+                    text: 'Check out ' + {{DOG_NAME_JS}} + '\'s personality quiz results!',
                     url: window.location.href
                 });
             } else {
@@ -419,7 +419,7 @@ export const RESULTS_TEMPLATE = `<!DOCTYPE html>
             const imageUrl = window.location.origin + '/images/' + (generatedImages[trait] || 'placeholder.png');
             if (navigator.share) {
                 navigator.share({
-                    title: '{{DOG_NAME}}\\\'s ' + trait + ' personality',
+                    title: {{DOG_NAME_JS}} + '\'s ' + trait + ' personality',
                     url: imageUrl
                 });
             } else {
