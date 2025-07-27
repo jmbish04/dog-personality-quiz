@@ -60,6 +60,7 @@ const mockGlobals = {
 // Simple test runner
 function test(name: string, testFn: () => void) {
   try {
+    mockElements.clear(); // Reset state before each test
     testFn();
     console.log(`✅ ${name}`);
   } catch (error) {
