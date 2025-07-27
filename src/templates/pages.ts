@@ -8,7 +8,7 @@ export function getHomePage(): string {
 export function getQuizPage(slug: string, session: any): string {
   return QUIZ_TEMPLATE
     .replace(/{{DOG_NAME}}/g, escapeHtml(session.dog_name))
-    .replace(/{{SLUG}}/g, escapeHtml(slug))
+   .replace(/{{SLUG}}/g, slug)
     .replace(/{{PHOTO_DISPLAY}}/g, session.photo_url ? 'none' : 'block')
     .replace(/{{PHOTO_URL}}/g, session.photo_url ? escapeHtml(session.photo_url) : '');
 }
