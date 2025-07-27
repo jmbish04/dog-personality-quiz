@@ -7,8 +7,9 @@ export function getHomePage(): string {
 
 export function getQuizPage(slug: string, session: any): string {
   return QUIZ_TEMPLATE
-    .replace(/{{DOG_NAME}}/g, escapeHtml(session.dog_name))
-   .replace(/{{SLUG}}/g, slug)
+    .replace(/{{DOG_NAME_HTML}}/g, escapeHtml(session.dog_name))
+    .replace(/{{DOG_NAME_JS}}/g, JSON.stringify(session.dog_name))
+    .replace(/{{SLUG}}/g, escapeHtml(slug))
     .replace(/{{PHOTO_DISPLAY}}/g, session.photo_url ? 'none' : 'block')
     .replace(/{{PHOTO_URL}}/g, session.photo_url ? escapeHtml(session.photo_url) : '');
 }
@@ -91,7 +92,8 @@ export function getResultsPage(slug: string, sessionData: any): string {
   
   return RESULTS_TEMPLATE
     .replace(/{{TITLE}}/g, escapeHtml(sessionData.title))
-    .replace(/{{DOG_NAME}}/g, escapeHtml(sessionData.dog_name))
+    .replace(/{{DOG_NAME_HTML}}/g, escapeHtml(sessionData.dog_name))
+    .replace(/{{DOG_NAME_JS}}/g, JSON.stringify(sessionData.dog_name))
     .replace(/{{SUMMARY}}/g, escapeHtml(sessionData.summary))
     .replace(/{{SLUG}}/g, escapeHtml(slug))
     .replace(/{{TRAIT_SECTIONS}}/g, traitSections)
