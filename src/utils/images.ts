@@ -1,6 +1,9 @@
 import { TraitScores } from './scoring';
+import { ensurePlaceholdersExist, getPlaceholderKey } from './placeholders';
 
 export async function generateTraitImages(ai: any, bucket: R2Bucket, session: any, scores: TraitScores): Promise<{ [trait: string]: string }> {
+  // Ensure placeholder images exist before we start
+  await ensurePlaceholdersExist(bucket);
   const generatedImages: { [trait: string]: string } = {};
   
   for (const [trait, data] of Object.entries(scores)) {
@@ -47,8 +50,8 @@ async function generateSingleTraitImage(ai: any, bucket: R2Bucket, session: any,
   } catch (error) {
     console.error(`Error in generateSingleTraitImage for ${trait}:`, error);
     
-    // Return a placeholder image key
-    return `placeholders/${trait}.png`;
+    // Return a placeholder image key that actually exists
+    return getPlaceholderKey(trait);
   }
 }
 

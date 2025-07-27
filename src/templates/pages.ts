@@ -401,7 +401,8 @@ export function getResultsPage(slug: string, sessionData: any): string {
                             <div class="relative inline-block">
                                 <img src="/images/${generatedImages[trait]}" 
                                      alt="${trait} image for ${sessionData.dog_name}"
-                                     class="w-64 h-64 object-cover rounded-full shadow-lg">
+                                     class="w-64 h-64 object-cover rounded-full shadow-lg"
+                                     onerror="this.onerror=null; this.src='data:image/svg%2Bxml;charset=utf-8,%3Csvg%20width%3D%22200%22%20height%3D%22200%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Crect%20width%3D%22200%22%20height%3D%22200%22%20fill%3D%22%23E0E0E0%22%20rx%3D%22100%22/%3E%3Ctext%20x%3D%22100%22%20y%3D%22120%22%20font-family%3D%22Arial%22%20font-size%3D%2240%22%20text-anchor%3D%22middle%22%20fill%3D%22%23333%22%3E%E2%97%86%3C/text%3E%3Ctext%20x%3D%22100%22%20y%3D%22150%22%20font-family%3D%22Arial%22%20font-size%3D%2214%22%20text-anchor%3D%22middle%22%20fill%3D%22%23333%22%3EDog%3C/text%3E%3C/svg%3E';">
                                 <div class="absolute -top-2 -right-2">
                                     <span class="bg-purple-600 text-white px-3 py-1 rounded-full text-sm font-bold">
                                         ${data.label}
@@ -419,7 +420,29 @@ export function getResultsPage(slug: string, sessionData: any): string {
                                 </button>
                             </div>
                         </div>
-                    ` : ''}
+                    ` : `
+                        <div class="text-center mb-6">
+                            <div class="relative inline-block">
+                                <div class="w-64 h-64 bg-gray-200 rounded-full shadow-lg flex items-center justify-center">
+                                    <div class="text-center">
+                                        <div class="text-6xl mb-2">${data.emoji}</div>
+                                        <div class="text-gray-600 font-semibold">${data.label}</div>
+                                    </div>
+                                </div>
+                                <div class="absolute -top-2 -right-2">
+                                    <span class="bg-purple-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                                        ${data.label}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <button onclick="regenerateImage('${trait}')" 
+                                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                                    🎨 Generate Image
+                                </button>
+                            </div>
+                        </div>
+                    `}
                     
                     <div class="text-center">
                         <button onclick="askAboutTrait('${trait}')" 

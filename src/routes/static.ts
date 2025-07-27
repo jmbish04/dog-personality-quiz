@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { serveStatic } from 'hono/cloudflare-workers';
 import { Env } from '../index';
 import { getHomePage, getQuizPage, getResultsPage } from '../templates/pages';
+import { getDataURIPlaceholder } from '../utils/placeholders';
 
 const staticRouter = new Hono<{ Bindings: Env }>();
 
@@ -56,6 +57,26 @@ staticRouter.get('/images/:key', async (c) => {
     const object = await c.env.BUCKET.get(key);
     
     if (!object) {
+      // If it's a placeholder request, try to create a data URI fallback
+      if (key.startsWith('placeholders/')) {
+        const trait = key.replace('placeholders/', '').replace(/\.(png|svg)$/, '');
+        const fallbackSVG = getDataURIPlaceholder(trait);
+        
+        // Redirect to the data URI or return a simple SVG response
+        const svgContent = `<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+          <rect width="200" height="200" fill="#E0E0E0" rx="100"/>
+          <text x="100" y="120" font-family="Arial" font-size="40" text-anchor="middle" fill="#333">🐶</text>
+          <text x="100" y="150" font-family="Arial" font-size="14" text-anchor="middle" fill="#333">Dog</text>
+        </svg>`;
+        
+        return new Response(svgContent, {
+          headers: {
+            'Content-Type': 'image/svg+xml',
+            'Cache-Control': 'public, max-age=3600'
+          }
+        });
+      }
+      
       return c.notFound();
     }
 
