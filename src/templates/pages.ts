@@ -9,7 +9,7 @@ export function getQuizPage(slug: string, session: any): string {
   return QUIZ_TEMPLATE
     .replace(/{{DOG_NAME_HTML}}/g, escapeHtml(session.dog_name))
     .replace(/{{DOG_NAME_JS}}/g, JSON.stringify(session.dog_name))
-    .replace(/{{SLUG}}/g, escapeHtml(slug))
+    .replace(/{{SLUG}}/g, session.slug.replace(/\\/g, '\\\\').replace(/'/g, "\\'"))
     .replace(/{{PHOTO_DISPLAY}}/g, session.photo_url ? 'none' : 'block')
     .replace(/{{PHOTO_URL}}/g, session.photo_url ? escapeHtml(session.photo_url) : '');
 }
