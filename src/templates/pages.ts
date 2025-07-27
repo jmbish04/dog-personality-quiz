@@ -488,7 +488,12 @@ export function getResultsPage(slug: string, sessionData: any): string {
                 const result = await response.json();
                 
                 if (result.success) {
-                    location.reload(); // Refresh to show new image
+                    const img = document.querySelector(\`img[alt^="\${trait} image"]\`);
+                    if (img) {
+                        img.src = \`/images/\${result.new_image}?t=\${new Date().getTime()}\`;
+                    } else {
+                        location.reload(); // Fallback if image not found
+                    }
                 } else {
                     alert('Error regenerating image: ' + result.error);
                 }
