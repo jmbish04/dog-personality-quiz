@@ -1,0 +1,4 @@
+{
+  "prompt": "docs/PROJECT_SPECI.md",
+  "action": "generate_code_based-on-spec"
+}
